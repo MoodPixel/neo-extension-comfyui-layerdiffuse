@@ -1,0 +1,362 @@
+{
+    "config_version": "layerdiffuse-extension-config-v1",
+    "extension_id": "image.layerdiffuse",
+    "default_state": {
+        "enabled": false,
+        "mode": "transparent_asset",
+        "source_type": "prompt",
+        "source_image_id": null,
+        "background_image_id": null,
+        "foreground_image_id": null,
+        "decode_mode": "rgba",
+        "output_policy": "new_run",
+        "replace_target_id": null,
+        "save_rgba": true,
+        "save_rgb": false,
+        "save_alpha": true,
+        "save_metadata": true,
+        "compatibility_mode": "auto"
+    },
+    "mode_templates": {
+        "transparent_asset": "transparent_asset_sdxl.json",
+        "rgb_alpha_split": "transparent_asset_split_sdxl.json",
+        "foreground_on_background": "foreground_on_background_sdxl.json",
+        "background_aware_blend": "background_aware_blend_sdxl.json",
+        "extract_foreground": "extract_foreground_from_composite_sdxl.json",
+        "overlay_fx": "overlay_fx_transparent_sdxl.json"
+    },
+    "phase": "phase_12_neo_workflow_template_sync",
+    "execution_enabled": true,
+    "workflow_templates": {
+        "folder": "workflow_templates",
+        "contract_schema": "_template_contract.schema.json",
+        "phase": "verified_prompt_driven_rgba_templates",
+        "templates": [
+            "transparent_asset_sdxl.json",
+            "transparent_asset_split_sdxl.json",
+            "foreground_on_background_sdxl.json",
+            "background_aware_blend_sdxl.json",
+            "extract_foreground_from_composite_sdxl.json",
+            "overlay_fx_transparent_sdxl.json"
+        ],
+        "notes": [
+            "Prompt-driven templates are now synced to the verified standalone ComfyUI LayerDiffuse RGBA workflow.",
+            "Templates route CheckpointLoaderSimple -> LayeredDiffusionApply -> KSampler -> VAEDecode -> LayeredDiffusionDecodeRGBA -> SaveImage.",
+            "Background/composite templates remain guarded until separate verified ComfyUI exports are tested."
+        ]
+    },
+    "default_mode": "transparent_asset",
+    "default_template": "transparent_asset_sdxl.json",
+    "default_patch_strategy": "replace_workflow",
+    "adapter": {
+        "version": "layerdiffuse-adapter-v1",
+        "entry": "backend/adapter.py",
+        "execution_plan": "build_execution_plan",
+        "workflow_patch": "build_workflow_patch",
+        "effective_state": "build_effective_state",
+        "contract_only": false,
+        "mapping_only_templates": false,
+        "payload_entry": "build_payload_entry",
+        "payload_block": "build_payload_block",
+        "payload_contract_version": "layerdiffuse-payload-contract-v1",
+        "metadata_contract_version": "layerdiffuse-metadata-contract-v1",
+        "run_metadata": "build_run_metadata",
+        "output_contract_version": "layerdiffuse-output-metadata-contract-v1",
+        "asset_contract_version": "layerdiffuse-asset-library-contract-v1",
+        "asset_manifest": "build_asset_manifest",
+        "graph_wiring_version": "layerdiffuse-verified-comfy-graph-v2"
+    },
+    "payload_contract": {
+        "version": "layerdiffuse-payload-contract-v1",
+        "metadata_version": "layerdiffuse-metadata-contract-v1",
+        "raw_state": "preserve_normalized_user_selection",
+        "effective_state": "validated_runtime_state_only",
+        "workflow_patch": "visible_non_executing_contract",
+        "hidden_mutations_allowed": false,
+        "builders": {
+            "payload_entry": "backend.adapter.build_payload_entry",
+            "payload_block": "backend.adapter.build_payload_block",
+            "run_metadata": "backend.adapter.build_run_metadata"
+        }
+    },
+    "ui_runtime": {
+        "version": "layerdiffuse-ui-panel-v1",
+        "entry_js": "static/layerdiffuse.js",
+        "entry_css": "static/layerdiffuse.css",
+        "state_store": "NeoExternalExtensionState",
+        "renders_visible_controls": true,
+        "hidden_behavior_allowed": false
+    },
+    "notes": [
+        "Phase 6 adds visible extension-local UI controls and validation/status rendering; it does not execute ComfyUI graphs.",
+        "Phase 7 adds extension-local workflow validation; executable ComfyUI graph application remains blocked until later phases.",
+        "Phase 8 adds output bundle and metadata save contracts; it declares paths/roles but does not perform direct file writes.",
+        "Phase 9 adds asset library registration records from the output bundle; persistence remains owned by Neo asset library/output collector."
+    ],
+    "validation": {
+        "version": "layerdiffuse-workflow-validation-v1",
+        "entry": "backend/validation.py",
+        "function": "validate_layerdiffuse_workflow",
+        "execution_enabled": true,
+        "block_when_execution_disabled": true,
+        "mode_requirements": {
+            "transparent_asset": {
+                "requires_prompt": true,
+                "required_images": [],
+                "recommended_decode": "rgba"
+            },
+            "rgb_alpha_split": {
+                "requires_prompt": true,
+                "required_images": [],
+                "recommended_decode": "split"
+            },
+            "foreground_on_background": {
+                "requires_prompt": true,
+                "required_images": [
+                    "background_image_id"
+                ],
+                "recommended_decode": "rgba"
+            },
+            "background_aware_blend": {
+                "requires_prompt": true,
+                "required_images": [
+                    "foreground_image_id",
+                    "background_image_id"
+                ],
+                "recommended_decode": "preview_only"
+            },
+            "extract_foreground": {
+                "requires_prompt": false,
+                "required_images": [
+                    "source_image_id",
+                    "background_image_id"
+                ],
+                "recommended_decode": "split"
+            },
+            "overlay_fx": {
+                "requires_prompt": true,
+                "required_images": [],
+                "recommended_decode": "split"
+            }
+        },
+        "supported_workflows": [
+            "txt2img",
+            "img2img"
+        ],
+        "supported_model_families": [
+            "sdxl",
+            "sd",
+            "sd15",
+            "sd1.5",
+            "sd_1_5",
+            "sd1_5",
+            "sdxl_sd",
+            "sdxl/sd",
+            "sdxl_sd_family"
+        ],
+        "warn_model_families": [
+            "flux",
+            "qwen",
+            "qwen-image",
+            "zimage",
+            "unknown"
+        ],
+        "batch_policy": "force_1",
+        "output_policy": {
+            "replace_requires": [
+                "replace_target_id",
+                "replace_confirmed"
+            ]
+        },
+        "template_mapping_required": true,
+        "capability_nodes_required": true,
+        "model_family_aliases": {
+            "sdxl_sd": "sdxl",
+            "sdxl/sd": "sdxl",
+            "sdxl_sd_family": "sdxl",
+            "sd": "sd15",
+            "sd15": "sd15",
+            "sd1.5": "sd15",
+            "sd_1_5": "sd15",
+            "sd1_5": "sd15"
+        }
+    },
+    "output_metadata": {
+        "version": "layerdiffuse-output-metadata-contract-v1",
+        "entry": "backend/output_metadata.py",
+        "builders": {
+            "output_bundle": "build_output_bundle",
+            "metadata_block": "build_metadata_block",
+            "validator": "validate_output_bundle"
+        },
+        "base_dir": "layerdiffuse_outputs",
+        "metadata_filename": "metadata.json",
+        "outputs_by_mode": {
+            "transparent_asset": [
+                "rgba_image",
+                "alpha_mask",
+                "preview_image"
+            ],
+            "rgb_alpha_split": [
+                "rgba_image",
+                "rgb_image",
+                "alpha_mask",
+                "preview_image"
+            ],
+            "foreground_on_background": [
+                "rgba_image",
+                "alpha_mask",
+                "preview_image"
+            ],
+            "background_aware_blend": [
+                "composited_image",
+                "preview_image"
+            ],
+            "extract_foreground": [
+                "rgba_image",
+                "rgb_image",
+                "alpha_mask",
+                "preview_image"
+            ],
+            "overlay_fx": [
+                "rgba_image",
+                "alpha_mask",
+                "preview_image"
+            ]
+        },
+        "output_roles": {
+            "rgba_image": "primary",
+            "rgb_image": "sidecar",
+            "alpha_mask": "mask",
+            "preview_image": "preview",
+            "composited_image": "primary"
+        },
+        "policy_behavior": {
+            "preview": "declare preview only; do not persist final/sidecar outputs",
+            "new_run": "save as separate LayerDiffuse output bundle",
+            "append": "append saveable outputs to current run/assets",
+            "replace": "requires visible replace_target_id and confirmation before persistence"
+        },
+        "hidden_mutations_allowed": false,
+        "raw_effective_state_required": true,
+        "asset_manifest": "embedded_in_metadata_block"
+    },
+    "asset_library": {
+        "version": "layerdiffuse-asset-library-contract-v1",
+        "entry": "backend/asset_library.py",
+        "builders": {
+            "asset_manifest": "build_asset_manifest",
+            "validator": "validate_asset_manifest"
+        },
+        "asset_root": "neo_library_data/assets/layerdiffuse",
+        "register_on_output_policies": [
+            "append",
+            "new_run",
+            "replace"
+        ],
+        "skip_on_output_policies": [
+            "preview"
+        ],
+        "asset_kinds": {
+            "rgba_image": "transparent_rgba",
+            "rgb_image": "rgb_sidecar",
+            "alpha_mask": "alpha_mask",
+            "preview_image": "preview",
+            "composited_image": "composited_image"
+        },
+        "reuse_targets": {
+            "rgba_image": [
+                "foreground_source",
+                "overlay",
+                "image_layer",
+                "after_effects_asset"
+            ],
+            "alpha_mask": [
+                "mask",
+                "matte",
+                "after_effects_luma_matte"
+            ],
+            "rgb_image": [
+                "rgb_reference",
+                "manual_composite_source"
+            ],
+            "composited_image": [
+                "image_output",
+                "poster_composite",
+                "new_run_source"
+            ]
+        },
+        "hidden_registration_allowed": false,
+        "requires_visible_output_policy": true,
+        "side_effect_free": true
+    },
+    "editor_export": {
+        "contract_version": "layerdiffuse-editor-export-contract-v1",
+        "side_effect_free": true,
+        "hidden_export_allowed": false,
+        "presets": [
+            {
+                "id": "after_effects_png_bundle",
+                "label": "After Effects PNG Bundle",
+                "outputs": [
+                    "asset_rgba.png",
+                    "asset_rgb.png",
+                    "asset_alpha.png",
+                    "preview.jpg",
+                    "editor_export_manifest.json"
+                ]
+            },
+            {
+                "id": "transparent_overlay_pack",
+                "label": "Transparent Overlay Pack",
+                "outputs": [
+                    "asset_rgba.png",
+                    "asset_alpha.png",
+                    "preview.jpg",
+                    "editor_export_manifest.json"
+                ]
+            },
+            {
+                "id": "thumbnail_poster_asset_pack",
+                "label": "Thumbnail / Poster Asset Pack",
+                "outputs": [
+                    "composited.png",
+                    "asset_rgba.png",
+                    "asset_alpha.png",
+                    "preview.jpg",
+                    "editor_export_manifest.json"
+                ]
+            }
+        ],
+        "policies": {
+            "preview": "declare preview export only; do not persist final editor bundle unless user exports manually",
+            "new_run": "declare editor bundle for the new run output folder",
+            "append": "declare editor bundle linked to asset library records",
+            "replace": "declare export against visible replace target only"
+        },
+        "ae_notes": [
+            "RGBA PNG is primary",
+            "alpha mask is sidecar matte",
+            "RGB image is sidecar reference",
+            "metadata manifest links all files"
+        ]
+    },
+    "version": "0.11.0",
+    "phase11_graph_wiring": {
+        "version": "layerdiffuse-real-comfy-graph-v1",
+        "executable_modes": [
+            "transparent_asset",
+            "rgb_alpha_split",
+            "overlay_fx"
+        ],
+        "primary_output_rule": "LayeredDiffusionDecodeRGBA -> SaveImage must be primary; VAEDecode save is preview only",
+        "dimensions_multiple_of": 64,
+        "background_modes": "blocked_until_exported_workflow_mapping"
+    },
+    "verified_reference_workflow": {
+        "name": "layer_diffusion_fg_example_rgba.json",
+        "source": "ComfyUI-layerdiffuse example_workflows",
+        "sdxl_apply_config": "SDXL, Conv Injection",
+        "required_local_patch": "ComfyUI-layerdiffuse DecodeRGBA compatibility patch may be needed on newer ComfyUI builds when JoinImageWithAlpha API changes."
+    }
+}

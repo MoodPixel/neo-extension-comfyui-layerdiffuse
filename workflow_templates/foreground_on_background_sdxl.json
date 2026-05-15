@@ -1,0 +1,108 @@
+{
+    "template_schema_version": "layerdiffuse-template-v2",
+    "extension_id": "image.layerdiffuse",
+    "mode": "foreground_on_background",
+    "strategy": "replace_workflow",
+    "template_id": "foreground_on_background_sdxl.json",
+    "engine": "comfyui",
+    "status": "requires_verified_workflow_export",
+    "description": "Generate foreground conditioned by selected background.",
+    "model_family": [
+        "sdxl"
+    ],
+    "batch_policy": "force_1",
+    "required_nodes": [
+        "LayeredDiffusionCondApply",
+        "LayeredDiffusionDecodeRGBA"
+    ],
+    "inputs": {
+        "required": [
+            "prompt",
+            "model",
+            "background_image_id"
+        ],
+        "optional": [
+            "negative_prompt",
+            "seed",
+            "steps",
+            "cfg",
+            "sampler",
+            "scheduler",
+            "width",
+            "height"
+        ],
+        "source_policy": "image",
+        "context_policy": [
+            "prompt",
+            "model",
+            "image",
+            "metadata"
+        ]
+    },
+    "bindings": {
+        "prompt": "$context.prompt",
+        "negative_prompt": "$context.negative_prompt",
+        "model": "$context.model",
+        "seed": "$context.seed",
+        "steps": "$context.steps",
+        "cfg": "$context.cfg",
+        "sampler": "$context.sampler",
+        "scheduler": "$context.scheduler",
+        "source_image": "$extensions.image.layerdiffuse.raw_state.source_image_id",
+        "background_image": "$extensions.image.layerdiffuse.raw_state.background_image_id",
+        "foreground_image": "$extensions.image.layerdiffuse.raw_state.foreground_image_id",
+        "decode_mode": "rgba",
+        "output_policy": "$extensions.image.layerdiffuse.raw_state.output_policy"
+    },
+    "outputs": [
+        {
+            "type": "rgba_image",
+            "role": "primary",
+            "required": true,
+            "binding": "$graph.output.rgba"
+        },
+        {
+            "type": "preview_image",
+            "role": "preview",
+            "required": true,
+            "binding": "$graph.output.preview"
+        }
+    ],
+    "validation": {
+        "block_if_missing_nodes": true,
+        "block_if_missing_template": true,
+        "block_if_missing_inputs": [
+            "prompt",
+            "model",
+            "background_image_id"
+        ],
+        "force_batch_size": 1,
+        "block_replace_without_target": true,
+        "warnings": [
+            "Phase 11 does not guess background/composite LayerDiffuse sockets.",
+            "Export a working local ComfyUI workflow for this mode, then map object_info before enabling execution."
+        ],
+        "phase12_note": "Prompt-driven RGBA templates are synced. Background/composite templates remain blocked until separate verified ComfyUI exports are tested."
+    },
+    "graph": {
+        "format": "comfyui_api_prompt",
+        "status": "blocked_until_exported_workflow_mapping",
+        "node_intent": [
+            "Load background image",
+            "Encode prompt with background context",
+            "Apply conditional LayerDiffuse foreground generation",
+            "Decode RGBA",
+            "Save foreground and preview composite"
+        ],
+        "placeholders": {
+            "checkpoint_loader": "$context.model_loader_node",
+            "positive_conditioning": "$context.prompt_conditioning",
+            "negative_conditioning": "$context.negative_conditioning",
+            "sampler": "$context.sampler_node",
+            "layerdiffuse_apply": "LayeredDiffusion*Apply selected by mode",
+            "layerdiffuse_decode": "LayeredDiffusionDecodeRGBA or LayeredDiffusionDecodeSplit",
+            "save_outputs": "Neo extension output collector"
+        },
+        "nodes": {}
+    }
+}
